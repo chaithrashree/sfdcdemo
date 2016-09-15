@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:sfdc="http://www.mulesoft.org/schema/mule/sfdc" xmlns:vm="http://www.mulesoft.org/schema/mule/vm" xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:batch="http://www.mulesoft.org/schema/mule/batch" xmlns:file="http://www.mulesoft.org/schema/mule/file" xmlns:dw="http://www.mulesoft.org/schema/mule/ee/dw" xmlns:tracking="http://www.mulesoft.org/schema/mule/ee/tracking" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:spring="http://www.springframework.org/schema/beans" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd
+http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/mule/ee/tracking/current/mule-tracking-ee.xsd
+http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/batch/current/mule-batch.xsd
+http://www.mulesoft.org/schema/mule/ee/dw http://www.mulesoft.org/schema/mule/ee/dw/current/dw.xsd
+http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/vm http://www.mulesoft.org/schema/mule/vm/current/mule-vm.xsd
+http://www.mulesoft.org/schema/mule/sfdc http://www.mulesoft.org/schema/mule/sfdc/current/mule-sfdc.xsd">
+
+    <file:connector name="FileIN" autoDelete="true" streaming="true" validateConnections="true" doc:name="File"/>
+    <file:connector name="FileOUT" autoDelete="false" streaming="true" validateConnections="true" doc:name="File" outputAppend="true"/>
+    <db:oracle-config name="Oracle_Configuration" host="localhost" port="1521" instance="xe" user="system" password="system" doc:name="Oracle Configuration"/>
+    <vm:connector name="VM" validateConnections="true" doc:name="VM"/>
+    <file:connector name="Filebatch" autoDelete="true" streaming="true" validateConnections="true" doc:name="File"/>
+    <file:connector name="Fileout1" autoDelete="true" streaming="true" validateConnections="true" doc:name="File"/>
+    <file:connector name="FileOut2" autoDelete="true" streaming="true" validateConnections="true" doc:name="File"/>
+    <flow name="sfdcdemoFlow" >
+        <file:inbound-endpoint path="C:\Users\purnasha_p\Desktop\INPUT" connector-ref="FileIN" responseTimeout="10000" doc:name="File"/>
+        <component class="com.mule.test.InsertBulkData2" doc:name="Java"/>
+        <logger message="#[payload]" level="INFO" doc:name="Logger"/>
+       <!--  <file:inbound-endpoint path="C:\Users\purnasha_p\Desktop\INPUT" connector-ref="FileIN" responseTimeout="10000" doc:name="File"/>
+        <flow-ref name="sfdcdemoSub_Flow" doc:name="sfdcdemoSub_Flow"/>
+se">
+            <db:parameterized-query><![CDATA[select count(*) from CONTROL_TABLE where STATUS='UNREAD']]></db:parameterized-query>
+        </db:select>
+        <logger message="#[payload[0]['count(*)'] !=0]" level="INFO" doc:name="Logger"/>
+        <choice doc:name="Choice">
+            <when expression="#[payload[0]['count(*)'] !=0]">
+                <component class="com.mule.test.InsertBulkData" doc:name="Java"/>
+                <set-session-variable variableName="Table_Name" value="#[payload]" doc:name="Session Variable"/>
+                <batch:execute name="sfdcdemoBatch" doc:name="Batch Execute"/>
+            </when>
+            <otherwise>
+                <logger message="Invalis" level="INFO" doc:name="Logger"/>
+            </otherwise>
+        </choice>
+    </sub-flow> <otherwise>
+                <logger message="Invalis" level="INFO" doc:name="Logger"/>
+            </otherwise>
+        </choice>
+           <db:parameterized-query><![CDATA[select * from #[sessionVars.Table_Name]]]></db:parameterized-query>int path="C:\Users\purnasha_p\Desktop\INPUT" connector-ref="FileIN" responseTimeout="10000" doc:name="File"/>
+            <db:select config-ref="Oracle_Configuration" streaming="true" fetchSize="8000" doc:name="Database">
+                <db:parameterized-query><![CDATA[select * from #[sessionVars.Table_Name]]]></db:parameterized-query>
+            </db:select>
+            <logger message="#[payload]" level="INFO" doc:name="Logger"/> -->
+            </flow>
+    <flow name="sfdcdemoFlow1">
+        <vm:inbound-endpoint exchange-pattern="one-way" path="InputQueue" connector-ref="VM" doc:name="VM"/>
+        <expression-transformer expression="#[message.payload = message.payload + System.getProperty('line.separator')]" doc:name="Append CRLF" />
+        <file:outbound-endpoint path="C:\Users\purnasha_p\Desktop\OUTPUT" outputPattern="output.csv" connector-ref="FileOUT" responseTimeout="10000" doc:name="File"/>
+    </flow>
+    <flow name="sfdcdemoFlow2">
+        <file:inbound-endpoint path="C:\Users\purnasha_p\Desktop\OUTPUT" connector-ref="Fileout1" fileAge="15000" responseTimeout="10000" doc:name="File"/>
+        <file:outbound-endpoint path="C:\Users\purnasha_p\Desktop\OUTPUT1" connector-ref="FileOut2" responseTimeout="10000" doc:name="File"/>
+    </flow>
+            
+        <!--  </batch:input>
+        <batch:process-records>
+            <batch:step name="Batch_Step">
+                <dw:transform-message doc:name="Transform Message">
+                    <dw:set-payload><![CDATA[%dw 1.0
+%output application/xml
+
+ {
+  PURCHASE_DETAILS :	payload
+}]]></dw:set-payload>
+                </dw:transform-message>
+                <object-to-string-transformer doc:name="Object to String"/>
+                <logger message="#[payload]" level="INFO" doc:name="Logger"/>
+            </batch:step>
+_Co
+            <db:update config-ref="Oracle_Configuration" doc:name="Database">
+                <db:parameterized-query><![CDATA[UPDATE CONTROL_TABLE SET STATUS='READ'  WHERE TABLE_NAME = #[sessionVars.Table_Name]]]></db:parameterized-query>
+            </db:update>nfiguration" doc:name="Database">
+                <db:parameterized-query><![CDATA[UPDATE CONTROL_TABLE SET STATUS='READ'  WHERE TABLE_NAME = #[sessionVars.Table_Name]]]></db:parameterized-query>
+            </db:update>
+        </batch:on-complete>
+    </batch:job> -->
+<!--     <flow name="sfdcdemoFlow" >
+        <file:inbound-endpoint path="C:\Users\purnasha_p\Desktop\INPUT" connector-ref="FileIN" responseTimeout="10000" doc:name="File"/>
+        <component class="com.mule.test.InsertBulkData" doc:name="Java"/>
+      
+    </flow> -->
+
+    
+</mule>
